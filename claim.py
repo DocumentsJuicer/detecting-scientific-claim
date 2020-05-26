@@ -31,12 +31,12 @@ from discourse.dataset_readers import ClaimAnnotationReaderJSON, CrfPubmedRCTRea
 from discourse.predictors import DiscourseClassifierPredictor
 
 
-TESTING = False # if true, run testing
+TESTING = True #False # if true, run testing
 EMBEDDING_DIM = 300
 BASE_DIR = os.getcwd()
 PUBMED_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=%s'
-DISCOURSE_MODEL_PATH = os.path.join(BASE_DIR,"model_crf.tar.gz")
-WEIGHT_PATH = os.path.join(BASE_DIR,"model_crf_tf.th")
+# DISCOURSE_MODEL_PATH = os.path.join(BASE_DIR,"model_crf.tar.gz")
+# WEIGHT_PATH = os.path.join(BASE_DIR,"model_crf_tf.th")
 
 
 class ClaimCrfPredictor(Predictor):
@@ -118,9 +118,10 @@ def get_claim(text_input):
         article = check_text_input(text_input)
         if len(article.get('abstract', '').strip()) > 0:
             abstract = article.get('abstract', '')
-            sentences = sent_tokenize(abstract)
+            
             labels = []
             if not TESTING:
+                sentences = sent_tokenize(abstract)
                 discourse_output = discourse_predictor.predict_json({'abstract': abstract})
                 labels = discourse_output['labels']
                 pred = claim_predictor.predict_json({'sentences': sentences})
@@ -129,6 +130,7 @@ def get_claim(text_input):
                 p_claims = 100 * np.array(best_paths[0][0])
                 p_claims = list(p_claims)
             else:
+                sentences = []
                 for sent in sent_tokenize(abstract):
                     sentences.append(sent)
                     label = np.random.choice(['RESULTS', 'METHODS',
@@ -143,15 +145,18 @@ def get_claim(text_input):
             labels = ['NO LABEL']
         data = {'sents': sentences,
                 'scores': p_claims,
-                'labels': labels,
-                'len': len,
-                'enumerate': enumerate,
-                'zip': zip}
+                'labels': labels} #,
+#                 'len': len,
+#                 'enumerate': enumerate,
+#                 'zip': zip}
         data.update(article)
   
 
-        for i,p in enumerate(data['labels']):
-            print(i,p)
-        for i,p in enumerate(data['sents']):
-            print(i,p)
+#         for i,p in enumerate(data['labels']):
+#             print(i,p)
+#         for i,p in enumerate(data['sents']):
+#             print(i,p)
         return data
+
+
+
